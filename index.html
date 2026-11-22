@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>カーリング判定早見</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: 状況（試合の流れ順）とテーマ（本文）の2入口。上にシート図、状況側は選択→判定→テーマの節へ */
+:root{
+  --bg:#f3f7fa; --surface:#ffffff; --ink:#14212b; --muted:#5a6b78; --rule:#d5e0e8;
+  --ice:#eaf3f8; --ice-edge:#b9cfdc; --ring-blue:#2c62b8; --ring-red:#c8323b; --hog:#c8323b; --line:#3c4f5c;
+  --accent:#2c62b8; --accent-ink:#ffffff;
+  --remove:#c8323b; --remove-bg:#fbe9ea; --keep:#1d7a4f; --keep-bg:#e5f4ec;
+  --choose:#a8640a; --choose-bg:#fbf0dc; --info:#2c62b8; --info-bg:#e6eefa;
+  --f-display:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f171d; --surface:#16222b; --ink:#e5edf2; --muted:#93a5b2; --rule:#2a3a46;
+  --ice:#1b2b36; --ice-edge:#35505f; --ring-blue:#5b8ee0; --ring-red:#e2575f; --hog:#e2575f; --line:#a9bcc8;
+  --accent:#6e9ee8; --accent-ink:#0f171d;
+  --remove:#f07a80; --remove-bg:#3a1e22; --keep:#5cc893; --keep-bg:#163126;
+  --choose:#e5a64a; --choose-bg:#352813; --info:#7fa9ec; --info-bg:#1a2a42; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f171d; --surface:#16222b; --ink:#e5edf2; --muted:#93a5b2; --rule:#2a3a46;
+  --ice:#1b2b36; --ice-edge:#35505f; --ring-blue:#5b8ee0; --ring-red:#e2575f; --hog:#e2575f; --line:#a9bcc8;
+  --accent:#6e9ee8; --accent-ink:#0f171d;
+  --remove:#f07a80; --remove-bg:#3a1e22; --keep:#5cc893; --keep-bg:#163126;
+  --choose:#e5a64a; --choose-bg:#352813; --info:#7fa9ec; --info-bg:#1a2a42; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.75}
+.wrap{max-width:980px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:22px}
+header{display:grid;gap:6px}
+.eyebrow{font-size:12px;letter-spacing:.08em;color:var(--muted)}
+h1{font-family:var(--f-display);font-weight:900;font-size:clamp(26px,5vw,36px);line-height:1.25;margin:0;text-wrap:balance}
+.lead{margin:0;color:var(--muted);max-width:44em}
+.tabs{display:flex;flex-wrap:wrap;gap:8px}
+.tab{font:inherit;font-weight:700;font-size:14px;border:1px solid var(--rule);background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:999px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tab:focus-visible,.opt:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.sheet-box{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:12px 12px 6px;overflow-x:auto}
+.sheet-box svg{display:block;width:100%;min-width:680px;height:auto}
+.sheet-cap{font-size:12px;color:var(--muted);margin:2px 4px 6px}
+.main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:22px;align-items:start}
+@media (max-width:760px){.main{grid-template-columns:minmax(0,1fr)}}
+.panel{display:grid;gap:18px}
+h2{font-family:var(--f-display);font-size:20px;margin:0;font-weight:700}
+.q{display:grid;gap:8px}
+.q-label{font-weight:700;font-size:14px}
+.opts{display:grid;gap:6px}
+.opt{font:inherit;text-align:left;border:1px solid var(--rule);background:var(--surface);color:var(--ink);padding:9px 12px;border-radius:8px;cursor:pointer;line-height:1.5}
+.opt:hover{border-color:var(--accent)}
+.opt[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--info-bg)}
+.answer{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:18px;display:grid;gap:12px;min-width:0}
+.verdict{display:inline-flex;align-self:start;justify-self:start;font-family:var(--f-display);font-weight:900;font-size:20px;padding:4px 14px;border-radius:6px}
+.k-remove .verdict{color:var(--remove);background:var(--remove-bg)}
+.k-keep .verdict{color:var(--keep);background:var(--keep-bg)}
+.k-choose .verdict{color:var(--choose);background:var(--choose-bg)}
+.k-info .verdict{color:var(--info);background:var(--info-bg)}
+.answer p{margin:0}
+.answer ol,.answer ul{margin:0;padding-left:1.4em;display:grid;gap:4px}
+.who{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.who div{border:1px solid var(--rule);border-radius:8px;padding:8px 10px;display:grid;gap:2px}
+.who b{font-size:12px;color:var(--muted);font-weight:500}
+.who span{font-weight:700}
+.meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;color:var(--muted)}
+.chip{font-family:var(--f-mono);font-size:12px;border:1px solid var(--rule);border-radius:4px;padding:1px 6px;color:var(--ink)}
+.lbl{font-size:11px;letter-spacing:.04em;padding:1px 6px;border-radius:4px;background:var(--info-bg);color:var(--info);font-weight:700}
+.lbl.t{background:var(--choose-bg);color:var(--choose)}
+.notes{border-top:1px dashed var(--rule);padding-top:10px;font-size:14px;color:var(--muted)}
+.notes li{line-height:1.6}
+.empty{color:var(--muted)}
+.lines3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (max-width:520px){.lines3{grid-template-columns:minmax(0,1fr)}}
+.lines3 div{background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:10px 12px;display:grid;gap:2px}
+.lines3 b{font-family:var(--f-display);font-size:14px}
+.lines3 span{font-size:13px;color:var(--muted)}
+.modes{display:inline-grid;grid-template-columns:1fr 1fr;border:1px solid var(--rule);border-radius:10px;padding:3px;background:var(--surface);justify-self:start;gap:3px}
+.mode{font:inherit;font-weight:700;font-size:14px;border:0;background:transparent;color:var(--muted);padding:7px 16px;border-radius:7px;cursor:pointer;white-space:nowrap}
+.mode[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.mode:focus-visible,.jump:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.theme{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:28px;align-items:start}
+@media (max-width:760px){.theme{grid-template-columns:minmax(0,1fr)}}
+.article{max-width:44em;display:grid;gap:12px;min-width:0}
+.article h2{font-size:24px;font-weight:900}
+.article h3{font-family:var(--f-display);font-size:17px;margin:14px 0 0;padding-top:12px;border-top:1px solid var(--rule)}
+.article p{margin:0}
+.article ul,.article ol{margin:0;padding-left:1.4em;display:grid;gap:4px}
+.tbl{overflow-x:auto;border:1px solid var(--rule);border-radius:8px;background:var(--surface)}
+.tbl table{border-collapse:collapse;width:100%;font-size:14px;line-height:1.6}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--rule)}
+.tbl tr:last-child td{border-bottom:0}
+.tbl th{font-size:12px;color:var(--muted);font-weight:700;background:var(--bg)}
+.tbl td.r{font-family:var(--f-mono);font-size:12px;white-space:nowrap}
+.myth{background:var(--choose-bg);border-radius:8px;padding:10px 14px;display:grid;gap:4px}
+.myth b{color:var(--choose)}
+.new{display:inline-block;font-size:11px;font-weight:700;color:var(--remove);border:1px solid currentColor;border-radius:4px;padding:0 5px;margin-right:4px;vertical-align:1px}
+.lbl.g{background:var(--choose-bg);color:var(--choose)}
+.aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);display:grid;gap:8px;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:14px}
+@media (max-width:760px){.aside{position:static}}
+.aside .q-label{margin-bottom:2px}
+.jump{font:inherit;font-size:14px;text-align:left;border:0;border-left:3px solid var(--rule);background:transparent;color:var(--ink);padding:4px 10px;cursor:pointer;line-height:1.5}
+.jump:hover{border-left-color:var(--accent);color:var(--accent)}
+.jump small{display:block;color:var(--muted);font-size:12px}
+footer{font-size:12px;color:var(--muted);border-top:1px solid var(--rule);padding-top:14px;display:grid;gap:6px}
+footer a{color:var(--accent)}
+@media (prefers-reduced-motion:no-preference){.zone{transition:opacity .25s}}
+</style>
+<style>
+.phase-desc{margin:0;color:var(--muted);font-size:14px}
+.sitlist{display:grid;gap:6px}
+.refs{border-top:1px dashed var(--rule);padding-top:10px;display:grid;gap:4px}
+.refs .q-label{font-size:13px;color:var(--muted)}
+.article h3.hl{animation:hl 1.6s ease-out}
+@keyframes hl{0%{background:var(--info-bg)}100%{background:transparent}}
+@media (prefers-reduced-motion:reduce){.article h3.hl{animation:none}}
+.article h3{scroll-margin-top:calc(env(safe-area-inset-top,0px) + 16px)}
+.steps{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.steps .tab{position:relative}
+.arrow{color:var(--muted);font-size:12px}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">JCA競技規則 2026年9月版にもとづく非公式の解説（試作）</div>
+    <h1>カーリング判定早見</h1>
+    <p class="lead">「状況から引く」は試合の流れに沿って、起きたことから処置を調べる入口です。1つの状況が複数のテーマにまたがるときは、関係するテーマの節へ移れます。「テーマから読む」は、規則を話題ごとに通して読む入口です。</p>
+  </header>
+
+  <div class="modes" id="modes">
+    <button class="mode" id="mode-sit" data-mode="sit" aria-pressed="true">状況から引く</button>
+    <button class="mode" id="mode-theme" data-mode="theme" aria-pressed="false">テーマから読む</button>
+  </div>
+
+  <nav class="tabs steps" role="tablist" id="tabs"></nav>
+
+  <section class="sheet-box" aria-label="シート図">
+    <div class="sheet-cap">左が投げる側、右がプレーする側（1フィート＝約0.305m。ホッグライン〜ティーラインは21フィート）</div>
+    <svg id="sheet" viewBox="0 0 992 150" role="img" aria-label="カーリングシートの図"></svg>
+  </section>
+
+  <div class="main" id="sitview">
+    <section class="panel" id="panel" aria-live="polite"></section>
+    <section class="answer" id="answer" aria-live="polite"></section>
+  </div>
+
+  <div class="theme" id="themeview" hidden>
+    <article class="article" id="article"></article>
+    <aside class="aside" id="aside"></aside>
+  </div>
+
+  <footer>
+    <div>これは個人が作った非公式の解説です。正本はJCA競技規則で、解釈に争いがあるときは World Curling の英語版が優先されます。条番号は2026年9月版のものです。</div>
+    <div>根拠ラベル：<span class="lbl">公式</span> 条文で確認　<span class="lbl t">通念</span> 指導上の通説　<span class="lbl g">推測</span> 条文に明記がなく、条文からの読み</div>
+    <div>出典：<a href="https://www.curling.or.jp/committee/competition" target="_blank" rel="noopener">日本カーリング協会 競技委員会（競技規則の掲載ページ）</a></div>
+  </footer>
+</div>
+
+<script>
+const FT = ft => 20 + (ft + 14) * 6.8;      // 横位置：投げる側のティー=0、プレー側のティー=114（フィート）
+const YT = 14, YB = 116, YC = 65, PX = 6.8;  // シート幅は約15フィート
+const P = '<span class="lbl">公式</span>', T = '<span class="lbl t">通念</span>', G = '<span class="lbl g">推測</span>', NEW = '<span class="new">2026年9月版</span>';
+const tbl = (head, rows) => `<div class="tbl"><table><thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map(r => `<tr>${r.map((c, i) => `<td${i === r.length - 1 && /^[RC]\d/.test(c) ? ' class="r"' : ""}>${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+const h3 = (id, t) => `<h3 id="${id}">${t}</h3>`;
+const THREE = `<ol><li>触れたストーンを取り除き、違反のあとに動いたストーンを元の位置に戻す</li><li>全部そのままにする</li><li>触れなかったら止まったはずの位置に、全部のストーンを置く</li></ol>`;
+
+/* ================= テーマ（本文はここに1回だけ書く） ================= */
+const TH = {
+  "t-remove": {
+    tab: "ストーンが取り除かれる条件",
+    sheet: { k: "keep", zone: { a: 93, b: 120 } },
+    html: `<h2>ストーンが取り除かれる条件</h2>
+<p>決め手は「どの線を越えたか・触れたか」です。ハウスに入ったかどうかは関係ありません。ハウスの外でも、プレーする側のホッグラインを完全に越え、バックラインを完全には越えず、サイドラインに触れていなければ、ストーンは残ります。シート図の緑の区間がそれにあたります。</p>
+${h3("remove-lines", "3本の線は基準が違う")}
+<p>ホッグラインは「越えきっていないと除く」、バックラインは「越えきったら除く」、サイドラインは「触れたら除く」です。ラインにちょうどかかったストーンの扱いが、ホッグとバックで逆になる点に注意してください。</p>
+${tbl(["線", "取り除く条件", "ラインにかかったストーン", "条文"], [
+  ["プレーする側のホッグライン", "内側のエッジを完全に越えていない", "除く", "R2(f)"],
+  ["バックライン", "外側のエッジを完全に越えて止まった", "残る", "R2(g)"],
+  ["サイドライン", "触れた瞬間（仕切り板に当たった場合も）", "除く", "R2(h)"]])}
+<p>${P} サイドラインに触れたストーンは、止まるのを待たずにその瞬間に取り除き、隣のシートに入らないようにします。</p>
+${h3("remove-other", "線のほかに取り除かれる場合")}
+<ul>
+<li>${P} 途中で転がったストーン、横や逆さで止まったストーン（R2(d)）</li>
+<li>${P} 投げる側のホッグラインに達する前に手を離していなかったストーン。投げたチームがすぐに取り除きます。取り除く前に他のストーンに当たった場合は、動いたストーンを相手チームが元の位置に戻します（R5(e)(f)）</li>
+<li>${P} 間違った側のハックから投げたストーン。右投げはセンターラインの左側、左投げは右側のハックを使います。動いたストーンは相手チームが元に戻します（R5(c)）</li>
+<li>${P} 1〜5投目にフリーガードゾーンの相手のストーンを外に出した場合の、投げたストーン（R6(b)）。テーマ「フリーガードゾーン」で扱います</li>
+<li>${P} 自チームが動いているストーンに触れた場合。テーマ「ストーンへの接触」で扱います</li>
+</ul>
+${h3("remove-exception", "例外：他のストーンに当たった場合")}
+<p>${P} インプレーの他のストーンに当たったストーンは、プレーする側のホッグラインを越えていなくても、そのまま残ります（R2(f) ただし書き）。たとえば、ホッグラインのすぐ奥にあるガードに当たった投げたストーンが、跳ね返ってホッグラインの手前で止まった場合でも、そのストーンは残ります。</p>
+${h3("remove-myth", "よくある誤解")}
+<div class="myth"><b>「ハウスに入らないと残らない」</b><span>誤りです。ハウスの外でも、ホッグラインとバックラインの間で、サイドラインに触れていなければ残ります。</span></div>
+<div class="myth"><b>「ホッグラインに少しでもかかっていれば残る」</b><span>誤りです。かかっていれば残るのはバックラインのほうです。ホッグラインは完全に越える必要があります。</span></div>
+${h3("remove-new", "インプレーになる時点")}
+<p>${P} ストーンは投げる側のティーラインに達したときにインプレーになります。達していないストーンは、選手に戻して投げ直して構いません。${NEW} 「デリバリーされたとみなす」のは投げる側のホッグラインに達したとき、と別に書かれました（R5(g)）。</p>`
+  },
+
+  "t-sweep": {
+    tab: "スウィープ",
+    sheet: { k: "info", line: 114 },
+    html: `<h2>スウィープできる人と優先権</h2>
+<p>境界はハウスではなく、プレーする側のティーラインです（シート図で強調している線）。ティーラインより手前（ハウスの前半分を含む）では、ストーンの持ち主のチームしか掃けません。そのため優先権の問題は起きません。両チームが掃けるのはティーラインより奥だけで、そこでは持ち主のチームが優先権を持ちます。</p>
+${h3("sweep-front", "ティーラインより手前")}
+${tbl(["ストーン", "掃けるチーム", "人数", "条文"], [
+  ["投げたストーン", "投げたチームだけ", "誰でも、1人以上", "R8(d)"],
+  ["当たって動いた、投げたチームのストーン", "投げたチームだけ", "誰でも、1人以上", "R8(b)"],
+  ["当たって動いた、相手チームのストーン", "そのストーンの持ち主のチームだけ", "誰でも、1人以上", "R8(b)"]])}
+<p>${P} 相手のストーンは、ティーラインに達するまで一切掃けません（R8(e)）。</p>
+${h3("sweep-back", "ティーラインより奥")}
+<p>${P} 各チームとも、同時に掃けるのは1人だけです（R8(f)）。</p>
+${tbl(["ストーン", "優先権", "投げたチームで掃ける人", "投げていないチームで掃ける人"], [
+  ["投げたストーン", "投げたチーム", "誰でも1人", "スキップかバイススキップ1人"],
+  ["当たって動いた、投げたチームのストーン", "投げたチーム", "誰でも1人", "スキップかバイススキップ1人"],
+  ["当たって動いた、投げていないチームのストーン", "投げていないチーム", "誰でも1人", "スキップかバイススキップ1人"]])}
+<p>「誰でも」か「スキップ・バイススキップに限る」かは、ストーンの持ち主で決まるのではありません。そのとき投げた側かどうかで決まります。3行目のように、自分のチームのストーンでも、投げていない側ならスキップかバイススキップしか掃けません。</p>
+${h3("sweep-priority", "優先権の中身")}
+<ul>
+<li>${P} 持ち主のチームが掃くなら、相手は譲ります。持ち主が掃かないなら、相手が掃いて構いません（R8(g)）</li>
+<li>${P} 持ち主のチームは、相手のスウィープを邪魔したり妨げたりしてはいけません（R8(g)）</li>
+<li>${G} 掃かずにブラシや体で相手の進路をふさぐのも、これに当たると読めます</li>
+</ul>
+${h3("sweep-cases", "細かいケース")}
+<ul>
+<li>${P} 止まっているストーンは、動き出すまで掃けません（R8(b)）</li>
+<li>${P} 次のストーンを投げる前のアイス清掃は、全員がしてよいことになっています（R8(c)）。下の「先回りして掃く」とは別のものです</li>
+<li>${T} 相手のストーンがティーラインに達する前に、ティーラインより奥の経路を先に掃いておくのは違反とされています。完全に越えるまで待つ必要はなく、前端が達した時点から掃けます</li>
+<li>「ティーラインに達した」の基準は、JCA（World Curling）の規則には明記がありません。Curling Canadaの規則（11(7)）では「ストーンの前端が達するまで」と書かれています</li>
+<li>${G} ティーラインより奥で複数のストーンが動いているとき、1チーム1人の制限は、ストーンごとではなくチーム全体にかかると読めます</li>
+<li>${G} ティーラインを越えたあと手前に戻ってきたストーンは、戻った時点で相手は掃けなくなると読めます</li>
+<li>${P} 車いすカーリングでは、スウィープ自体ができません。ミックスダブルスでは、ティーラインより手前で1人または2人が自チームのストーンを掃けます</li>
+</ul>
+${h3("sweep-foul", "違反したとき")}
+<p>${P} 掃いてはいけない人や場所で掃いた場合（R8(b)〜(g)）は、違反された側が「そのままにする」か「違反がなければ止まったはずの位置に全部のストーンを置き直す」かを選びます。</p>
+<p>${P} 掃き方の違反（ストーンの前でブラシを上げる、ゴミを残す、ストーンの幅の内側で掃くのをやめる）は、審判が見つけた場合、1回目は警告です。${NEW} 同じ大会で2回目以降の違反をすると、LSD中なら最大値を記録し、試合中なら違反された側が「そのままにする」か「投げたストーンを取り除いて元に戻す」かを選びます。以前は必ず取り除いていました（R8(a)）。</p>`
+  },
+
+  "t-touch": {
+    tab: "ストーンへの接触",
+    sheet: { k: "choose", line: 93 },
+    html: `<h2>ストーンへの接触</h2>
+<p>自チームの選手やブラシがストーンに触れたときの扱いは、プレーする側のホッグライン（シート図で強調している線）で分かれます。その手前なら、触れたストーンをすぐに取り除きます。越えた後なら、全部のストーンが止まるのを待ってから、相手チームが処置を選びます。</p>
+<p>${P} 対象は投げたストーンに限らず、自チームのストーン全部です。また「触れた」だけでなく「触れる状況を作った」場合も含みます。</p>
+${h3("touch-moving", "動いているストーンに自チームが触れた（R9）")}
+${tbl(["触れた場所", "処置", "条文"], [
+  ["投げる側のティーライン〜プレーする側のホッグライン", "触れたストーンを、自チームがすぐに取り除く", "R9(a)I"],
+  ["プレーする側のホッグラインより内側（ハウスを含む）", "全部のストーンが止まるのを待ち、相手チームが下の3つから選ぶ", "R9(b)I"],
+  ["ラストストーンドロー（LSD）", "取り除き、記録は1.996m（6フィート6.5インチ）", "R9(c)I"]])}
+<p>ホッグラインより内側で、相手チームが選べる処置は次の3つです。</p>
+${THREE}
+<p>${P} ${NEW} 投げた本人が、投げる側のホッグラインより手前でハンドルに二度触れる（ダブルタッチ）のは違反になりません。「投げた本人が」「ハンドルに」という条件が明記されました（R9(a)I）。</p>
+<p>${P} ${NEW} 投げる側のティーラインを越えたところで、ハンドルではなく石の部分に触れると、動いているストーンに触れたものとして取り除かれます（R5(d)）。</p>
+${h3("touch-still", "止まっているストーンを自チームが動かした（R10）")}
+${tbl(["状況", "処置", "条文"], [
+  ["動いているストーンの結果に影響しなかったと思われる", "相手チームが、そのストーンを元の位置に戻す", "R10(a)"],
+  ["動いているストーンのコースを変えたと思われる", "全部のストーンが止まるのを待ち、相手チームが「そのまま」「コースが変わったはずのストーンを取り除き、違反のあとに動いたストーンを戻す」「動かされなかったら止まったはずの位置に全部置く」から選ぶ", "R10(c)"],
+  ["LSDで、審判の計測が終わる前に触れた", "取り除き、記録は1.996m", "R10(f)I"]])}
+<div class="myth"><b>「R10(c)で取り除くのは、動かしてしまったストーン」</b><span>誤りです。取り除くのは、それによってコースが変わったはずの、動いていたストーンのほうです。</span></div>
+${h3("touch-place", "「止まったはずの位置に置く」の意味")}
+<p>選択肢1は「その投球はなかったことにする」、選択肢3は「その投球は最後まで行われたことにする」という処置です。違いが出るのは、触れなかったら他のストーンに当たっていたはずの場合です。置く位置は、相手チームが合理的に考えて決めます。</p>
+<p>例：ティーを0、奥をプラスとします（4フィート円の半径は約0.61m、12フィート円は約1.83m）。Aのストーン①が＋0.5m、Bのストーンが−1.0mにあります。Aの強すぎるドロー②に、Aのスウィーパーのブラシが当たり、②はティー（0m）で止まりました。Bは「触れなかったら②は①に当たり、①はバックラインの外へ、②は＋1.7mで止まった」と判断しました。</p>
+${tbl(["選択肢", "盤面", "ティーに一番近いストーン"], [
+  ["1. 取り除いて元に戻す", "②を除く。①は＋0.5mのまま", "A①（0.5m）。Aがリード"],
+  ["2. そのまま", "②が0m、①が＋0.5m", "A②（0m）。Aは2個とも内側"],
+  ["3. 止まったはずの位置に置く", "①を除き、②を＋1.7mに置く", "B（1.0m）。Bがリード"]])}
+<p>この例では、触れなかったら②が自チームの①を弾き出していたので、選択肢3を選ぶとBがリードします。${G} 逆に、触れなかったら違反された側（B）のストーンを弾き出していたはずの場合は、選択肢3を選ぶとBが損をするので、普通は1か2が選ばれると考えられます。</p>
+${h3("touch-opp", "相手チームが触れた場合")}
+<ul>
+<li>${P} 投げる側のティーライン〜プレーする側のホッグラインで相手チームが触れた場合、投げたストーンなら投げ直します。それ以外のストーンなら、持ち主のチームが、触れなかったら止まったはずの位置に置きます（R9(a)II）</li>
+<li>${P} ホッグラインより内側で相手チームが触れた場合、全部止まるのを待ってから、違反された側が、触れなかったら止まったはずの位置に全部のストーンを置きます（R9(b)II）</li>
+</ul>`
+  },
+
+  "t-fgz": {
+    tab: "フリーガードゾーン",
+    sheet: { k: "info", fgz: true },
+    html: `<h2>フリーガードゾーンとノーティック</h2>
+<p>どちらも、エンドの序盤（1〜5投目）に相手のガードストーンを出すことを制限する規則です。6投目を投げる時点から制限はなくなります。</p>
+${h3("fgz-area", "フリーガードゾーンとはどこか")}
+<p>${P} プレーする側のホッグラインとティーラインの間で、ハウスを除いた範囲です（シート図の色の区間）。さらに、ゾーン内のストーンに当たって、ホッグライン上や手前で止まったインプレーのストーンも、ゾーンにあるとみなします（R6(a)）。</p>
+${h3("fgz-rule", "フリーガードゾーンの規則（R6）")}
+<p>${P} 1〜5投目に、投げたストーンが、ゾーンにある相手のストーンをプレーエリアの外に出した場合、投げたストーンを取り除き、動いたストーンは相手チームが元の位置に戻します。直接当てても、他のストーンを介して出しても同じです（R6(b)）。</p>
+<p>${P} 守られるのは相手チームのストーンだけです。自分のチームのガードを出しても違反にはなりません。</p>
+${h3("fgz-tick", "ノーティックの規則（R7）")}
+<p>${P} 1〜5投目に、ゾーン内でセンターラインに触れている相手のストーンを、センターラインから外した場合、またはゾーンの外に動かした場合は違反です。違反された側が「投げたストーンを取り除き、全部元に戻す」か「全部そのままにする」かを選びます（R7(a)）。</p>
+<ul>
+<li>${P} センターライン上のストーンをプレーエリアの外まで出した場合は、ノーティックではなくフリーガードゾーンの規則（R6(b)）が適用されます（R7(b)）</li>
+<li>${P} ノーティックは、車いすカーリングとミックスダブルスには適用されません（R7(c)）</li>
+</ul>
+${h3("fgz-diff", "2つの違い")}
+${tbl(["", "フリーガードゾーン", "ノーティック"], [
+  ["対象", "ゾーンにある相手のストーン", "ゾーン内でセンターラインに触れている相手のストーン"],
+  ["違反になること", "プレーエリアの外に出す", "センターラインから外す、またはゾーンの外に動かす"],
+  ["処置", "投げたストーンを取り除き、元に戻す", "違反された側が「取り除いて元に戻す」か「そのまま」かを選ぶ"],
+  ["条文", "R6", "R7"]])}
+${h3("fgz-myth", "よくある誤解")}
+<div class="myth"><b>「フリーガードゾーンは4投目まで」</b><span>古い規則です。現行は「6投目を投げる前まで」、つまり1〜5投目です。</span></div>`
+  },
+
+  "t-score": {
+    tab: "得点と計測",
+    sheet: { k: "info", zone: { a: 108, b: 120 } },
+    html: `<h2>得点と計測</h2>
+<p>点が入るのはハウスの中のストーンだけです（シート図の色の区間）。どちらが近いかを目で決められないときに測定します。</p>
+${h3("score-point", "得点の数え方")}
+<p>${P} エンドが終わった時点で、ハウスの中にあり、相手チームのどのストーンよりもティーに近いストーン1個につき1点です（R12(b)）。したがって、1つのエンドで点が入るのは、一番近いストーンを持つチームだけです。</p>
+<p>${P} エンドのスコアは、両チームのスキップ（またはその時ハウスを任されている代理）が同意した時点で決まります（R12(c)）。</p>
+${h3("score-measure", "測定するとき")}
+<ul>
+<li>${P} どちらのストーンがティーに近いか、またはハウスに入っているかを目で決められないときに、測定器を使います。ティーからストーンの一番近い部分までを測ります。各チームから1人ずつ、測定に立ち会えます（R12(d)）</li>
+<li>${P} エンドの途中は、最後のストーンが止まるまで目で見るだけで、測定はしません。例外は、ストーンがインプレーかどうかを決めるときと、2〜5投目の前にフリーガードゾーン・ノーティックの対象かどうかを決めるときです（R2(i)）</li>
+</ul>
+${h3("score-tie", "差がわからないとき")}
+<ul>
+<li>${P} 2個以上のストーンがティーに接していて測定器が使えない場合は、目で決めます（R12(e)）</li>
+<li>${P} 目で見ても測っても決められなければ、同じ距離とみなします。1点目（どちらのチームが近いか）を決める測定ならブランクエンド、2点目以降を決める測定なら、それより近いストーンだけを数えます（R12(f)）</li>
+</ul>
+${h3("score-moved", "スコアが決まる前にストーンが動いたとき")}
+<ul>
+<li>${P} 同意の前に選手がストーンを動かした場合、動かしていないチームが、測定すれば得られたかもしれない利益を受けます（R12(c)）</li>
+<li>${P} 同意の前に、スコアに影響したと思われるストーンが外的な要因で動いた場合、どちらが近いかを決める場面ならエンドをやり直します。動いたストーン以外にすでに得点するストーンがあるチームは、エンドをやり直すか、決まっている点をとるかを選べます（R12(g)）</li>
+<li>${P} ${NEW} 最終エンドで、計測の結果が試合の勝敗に影響しない場合は、計測の前にストーンが外的な要因で動いてもエンドはやり直さず、審判長がスコアを決めます（R12(h)）</li>
+</ul>`
+  },
+
+  "t-dispute": {
+    tab: "判定で揉めたとき",
+    sheet: null,
+    html: `<h2>判定で揉めたとき</h2>
+<p>「止まったはずの位置に置く」のように、起きなかったことを仮定する処置は、チームの間で判断が割れやすいと考えられます。${G}</p>
+${h3("dispute-umpire", "審判がいる試合")}
+<ul>
+<li>${P} 規則に書かれているかどうかに関係なく、チームの間で問題になっている事項には審判が裁定を下します（C10(b)）</li>
+<li>${P} 審判は大会中いつでも介入でき、ストーンの位置などについて指示できます（C10(c)）</li>
+<li>${P} 規則に関することは審判が判断し、その裁定に異議があるときは、審判長の裁定が最終決定です（C10(f)）</li>
+</ul>
+${h3("dispute-none", "審判がいない試合")}
+<p>リーグ戦や練習試合など、審判がいない試合でどう決着をつけるかは、規則には書かれていません。</p>
+<p>${P} 競技規則の冒頭には「カーリング精神」が置かれています。また、ストーンがプレー中に割れた場合は、カーリング精神に基づいて代わりのストーンを置き直し、合意できなければエンドをやり直す、という規定もあります（R2(c)）。規則がチーム同士の合意に任せる場面があることがわかります。</p>`
+  }
+};
+const TORDER = Object.keys(TH);
+
+/* ================= 状況（試合の流れ順。判定と、関係するテーマの節へのリンク） ================= */
+const ZA = ["zoneA", "投げる側のティーライン〜プレーする側のホッグライン"], ZB = ["zoneB", "プレーする側のホッグラインより内側（ハウスを含む）"];
+const N = { id: "n", label: "そのエンドの何投目？", opts: [["early", "1〜5投目"], ["late", "6投目以降"]] };
+
+const PH = [
+  { id: "p-throw", tab: "投げる", desc: "ハックを蹴ってから、ストーンを手から離すまで。", items: [
+    { id: "hack", label: "違う側のハックから投げた", refs: [["t-remove", "remove-other"]],
+      a: () => ({ k: "remove", v: "取り除く", body: "<p>右投げはセンターラインの左側、左投げは右側のハックから投げます。間違った側から投げたストーンはただちに取り除き、動いたストーンは相手チームが元の位置に戻します。</p>", rules: ["R5(c)"], sheet: { zone: { a: -14, b: -10 } } }) },
+    { id: "release", label: "投げる側のホッグラインまでに手を離せなかった", refs: [["t-remove", "remove-other"]],
+      a: () => ({ k: "remove", v: "取り除く", body: "<p>投げたチームがすぐに取り除きます。取り除く前に他のストーンに当たった場合は、動いたストーンを相手チームが元の位置に戻します。</p>", rules: ["R5(e)", "R5(f)"], sheet: { line: 21 } }) },
+    { id: "double", label: "投げた本人が、ハンドルに二度触れた", refs: [["t-touch", "touch-moving"]],
+      qs: [{ id: "w", label: "どこで触れた？", opts: [["before", "投げる側のホッグラインより手前"], ["after", "ホッグラインを越えてから"]] }],
+      a: s => s.w === "before"
+        ? { k: "keep", v: "違反にならない", body: `<p>投げた本人が、投げる側のホッグラインより手前でハンドルに二度触れる（ダブルタッチ）のは違反になりません。</p><p>${NEW} 「投げた本人が」「ハンドルに」という条件が明記されました。</p>`, rules: ["R9(a)I"], sheet: { zone: { a: 0, b: 21 } } }
+        : { k: "remove", v: "すぐ取り除く", body: "<p>ホッグラインを越えてから触れると、動いているストーンに自チームが触れたことになります。プレーする側のホッグラインより手前なので、すぐに取り除きます。</p>", rules: ["R9(a)I"], sheet: { zone: { a: 21, b: 93 } } } },
+    { id: "granite", label: "投げる側のティーラインを越えてから、石の部分に触れた", refs: [["t-touch", "touch-moving"]],
+      a: () => ({ k: "remove", v: "取り除く", body: `<p>ストーンはハンドルを使って投げなければなりません。投げる側のティーラインを越えたところで石の部分に触れると、動いているストーンに触れたものとして取り除かれます。</p><p>${NEW} 新しく加わった規定です。改正の解説によると、ミラノ・コルティナ冬季五輪で起きたことを受けて明文化されました。</p>`, rules: ["R5(d)"], sheet: { zone: { a: 0, b: 21 } } }) },
+    { id: "short", label: "ストーンが投げる側のティーラインに届かなかった（滑って転んだなど）", refs: [["t-remove", "remove-new"]],
+      a: () => ({ k: "keep", v: "投げ直してよい", body: `<p>ストーンは、投げる側のティーラインに達したときにインプレーになります。達していなければ、選手に戻して投げ直して構いません。</p><p>${NEW} 「デリバリーされたとみなす」のはホッグラインに達したとき、と別に書かれました。</p>`, rules: ["R5(g)"], sheet: { zone: { a: -12, b: 0 } } }) }
+  ]},
+
+  { id: "p-moving", tab: "ストーンが動いている間", desc: "ストーンが滑っている間のスウィープと接触。", items: [
+    { id: "who", label: "誰が掃ける？", refs: [["t-sweep", "sweep-front"], ["t-sweep", "sweep-back"], ["t-sweep", "sweep-priority"]],
+      qs: [{ id: "place", label: "ストーンはどこにある？", opts: [["front", "プレーする側のティーラインより手前"], ["back", "ティーラインより奥"]] },
+           { id: "stone", label: "どのストーン？", opts: [["thrown", "いま投げたストーン"], ["hitown", "当たって動いた、投げたチームのストーン"], ["hitopp", "当たって動いた、投げていないチームのストーン"]] }],
+      a: s => {
+        const F = s.place === "front", opp = s.stone === "hitopp";
+        const d = F ? (opp ? "掃けない" : "誰でも・1人以上") : "誰でも1人" + (opp ? "" : "（優先権あり）");
+        const o = F ? (opp ? "誰でも・1人以上" : "掃けない") : "スキップかバイススキップ1人" + (opp ? "（優先権あり）" : "");
+        const body = `<div class="who"><div><b>投げたチーム</b><span>${d}</span></div><div><b>投げていないチーム</b><span>${o}</span></div></div>` +
+          (F ? "<p>ティーラインより手前では、ストーンの持ち主のチームしか掃けません。</p>" : "<p>ティーラインより奥では、各チームとも同時に掃けるのは1人だけです。「誰でも」か「スキップ・バイススキップに限る」かは、そのとき投げた側かどうかで決まります。</p>");
+        return { k: "info", v: F ? "持ち主のチームだけ" : "両チーム1人ずつ", body, rules: F ? (s.stone === "thrown" ? ["R8(d)", "R8(e)"] : ["R8(b)", "R8(e)"]) : ["R8(f)", "R8(g)"], sheet: { zone: F ? { a: 0, b: 114 } : { a: 114, b: 126 } } };
+      } },
+    { id: "own", label: "自チームのブラシや体がストーンに触れた", refs: [["t-touch", "touch-moving"], ["t-touch", "touch-place"]],
+      qs: [{ id: "w", label: "どこで？", opts: [ZA, ZB, ["lsd", "ラストストーンドロー（LSD）"]] }],
+      a: s => ({
+        zoneA: { k: "remove", v: "すぐ取り除く", body: "<p>触れたストーンを、自チームがすぐにプレーから取り除きます。</p>", rules: ["R9(a)I"], sheet: { zone: { a: 0, b: 93 } } },
+        zoneB: { k: "choose", v: "相手が3択", body: "<p>全部のストーンが止まるのを待ちます。そのあと、相手チームが次から選びます。</p>" + THREE, rules: ["R9(b)I"], sheet: { zone: { a: 93, b: 126 } } },
+        lsd: { k: "remove", v: "取り除く", body: "<p>ストーンを取り除き、記録は1.996m（6フィート6.5インチ）になります。</p>", rules: ["R9(c)I"], sheet: { zone: { a: 93, b: 126 } } }
+      })[s.w] },
+    { id: "opp", label: "相手チームの選手やブラシがストーンに触れた", refs: [["t-touch", "touch-opp"]],
+      qs: [{ id: "w", label: "どこで？", opts: [ZA, ZB] }],
+      a: s => s.w === "zoneA"
+        ? { k: "info", v: "投げ直す／置き直す", body: "<p>投げたストーンなら投げ直します。当たって動いていたストーンなら、持ち主のチームが、触れなかったら止まったはずの位置に置きます。</p>", rules: ["R9(a)II"], sheet: { zone: { a: 0, b: 93 } } }
+        : { k: "info", v: "違反された側が置く", body: "<p>全部のストーンが止まるのを待ちます。そのあと、違反された側が、触れなかったら止まったはずの位置に全部のストーンを置きます。自チームが触れた場合と違い、選択肢はありません。</p>", rules: ["R9(b)II"], sheet: { zone: { a: 93, b: 126 } } } },
+    { id: "pre", label: "相手のストーンがティーラインに来る前に、奥を先に掃いた", refs: [["t-sweep", "sweep-cases"], ["t-sweep", "sweep-foul"]],
+      a: () => ({ k: "choose", v: "違反とされる", lab: "通念", body: `<p>相手のストーンを掃けるのは、そのストーンがティーラインに達してからです（R8(e)）。達する前に奥の経路を先に掃いておくのは、違反とするのが指導上の通説です。前端が達した時点からは掃けます。</p><p>${G} 処置は、掃いてはいけないときに掃いた場合（R8(b)〜(g)の違反）と同じと考えられます。</p>`, rules: ["R8(e)"], sheet: { line: 114 } }) },
+    { id: "foulwho", label: "掃いてはいけない人・場所で掃いた", refs: [["t-sweep", "sweep-foul"]],
+      a: () => ({ k: "choose", v: "相手が2択", body: "<p>違反された側が次から選びます。</p><ol><li>そのままにする</li><li>違反がなければ止まったはずの位置に、全部のストーンを置き直す</li></ol>", rules: ["R8(b)〜(g)"] }) },
+    { id: "foulhow", label: "掃き方の違反を審判に指摘された", refs: [["t-sweep", "sweep-foul"]],
+      a: () => ({ k: "choose", v: "1回目は警告", body: `<p>ストーンの前でブラシを上げる、ゴミを残す、ストーンの幅の内側で掃くのをやめる、といった違反です。審判が見つけた場合、1回目はチームへの警告です。</p><p>同じ大会で2回目以降の違反をすると、LSD中なら最大値を記録し、試合中なら違反された側が「そのままにする」か「投げたストーンを取り除き、動いたストーンを全部元に戻す」かを選びます。</p><p>${NEW} 以前は2回目以降は必ず取り除いていました。</p>`, rules: ["R8(a)"] }) }
+  ]},
+
+  { id: "p-contact", tab: "当たって止まるまで", desc: "ストーン同士が当たってから、全部が止まるまで。", items: [
+    { id: "guard", label: "ガードを外に出した", refs: [["t-fgz", "fgz-area"], ["t-fgz", "fgz-rule"]],
+      qs: [N, { id: "whose", label: "出したのは？", opts: [["opp", "フリーガードゾーンにある相手のストーン"], ["own", "自分のチームのストーン"]] }],
+      a: s => s.n === "late" ? { k: "keep", v: "制限なし", body: "<p>フリーガードゾーンの制限は、6投目を投げる前までです。6投目以降は出してもそのままです。</p>", rules: ["R6(b)"], sheet: { fgz: true } }
+        : s.whose === "own" ? { k: "keep", v: "違反にならない", body: "<p>フリーガードゾーンの規則が守るのは、相手チームのストーンだけです。自分のチームのガードを出しても違反にはなりません。</p>", rules: ["R6(b)"], sheet: { fgz: true } }
+        : { k: "remove", v: "投げたストーンを除く", body: "<p>投げたストーンを取り除き、動いたストーンは相手チームが元の位置に戻します。直接当てても、他のストーンを介して出しても同じです。</p>", rules: ["R6(b)"], sheet: { fgz: true } } },
+    { id: "tick", label: "センターライン上の相手のガードをずらした", refs: [["t-fgz", "fgz-tick"], ["t-fgz", "fgz-diff"]],
+      qs: [N, { id: "res", label: "そのストーンはどうなった？", opts: [["moved", "センターラインから外れた／ゾーンの外に動いた（プレーエリアには残った）"], ["out", "プレーエリアの外まで出た"]] }],
+      a: s => s.n === "late" ? { k: "keep", v: "制限なし", body: "<p>ノーティックの制限は、6投目を投げる前までです。</p>", rules: ["R7(a)"], sheet: { fgz: true, center: true } }
+        : s.res === "out" ? { k: "remove", v: "投げたストーンを除く", body: "<p>プレーエリアの外まで出した場合は、ノーティックではなくフリーガードゾーンの規則が適用されます。投げたストーンを取り除き、全部元に戻します。</p>", rules: ["R7(b)", "R6(b)"], sheet: { fgz: true, center: true } }
+        : { k: "choose", v: "相手が2択", body: "<p>違反された側が次から選びます。</p><ol><li>投げたストーンを取り除き、動いたストーンを元の位置に戻す</li><li>全部そのままにする</li></ol><p>車いすカーリングとミックスダブルスには適用されません。</p>", rules: ["R7(a)", "R7(c)"], sheet: { fgz: true, center: true } } },
+    { id: "kick", label: "止まっているストーンを、自チームが蹴った・ブラシで動かした", refs: [["t-touch", "touch-still"], ["t-touch", "touch-place"]],
+      qs: [{ id: "e", label: "どうなった？", opts: [["no", "動いている他のストーンには影響しなかった"], ["yes", "動いているストーンのコースを変えた"], ["lsd", "LSDで、計測が終わる前に触れた"]] }],
+      a: s => ({
+        no: { k: "info", v: "元に戻す", body: "<p>相手チームが、そのストーンを元の位置に戻します。</p>", rules: ["R10(a)"] },
+        yes: { k: "choose", v: "相手が3択", body: "<p>全部のストーンが止まるのを待ちます。そのあと、相手チームが次から選びます。</p><ol><li>全部そのままにする</li><li>コースが変わったはずのストーンを取り除き、違反のあとに動いたストーンを元の位置に戻す</li><li>動かされなかったら止まったはずの位置に、全部のストーンを置く</li></ol><p>2で取り除くのは、動かしてしまった静止ストーンではなく、コースが変わったはずの動いているストーンのほうです。</p>", rules: ["R10(c)"] },
+        lsd: { k: "remove", v: "取り除く", body: "<p>ストーンを取り除き、記録は1.996m（6フィート6.5インチ）になります。</p>", rules: ["R10(f)I"], sheet: { zone: { a: 108, b: 120 } } }
+      })[s.e] },
+    { id: "bounce", label: "当たったストーンが、ホッグラインの手前で止まった", refs: [["t-remove", "remove-exception"]],
+      a: () => ({ k: "keep", v: "残る", body: "<p>インプレーの他のストーンに当たったストーンは、プレーする側のホッグラインを越えていなくても、そのまま残ります。</p>", rules: ["R2(f) ただし書き"], sheet: { zone: { a: 21, b: 93 } } }) },
+    { id: "side", label: "ストーンがサイドラインに触れた", refs: [["t-remove", "remove-lines"]],
+      a: () => ({ k: "remove", v: "取り除く", body: "<p>サイドラインに触れた瞬間、または仕切り板に当たった瞬間に取り除きます。止まるのを待たず、隣のシートに入らないようにします。</p>", rules: ["R2(h)"], sheet: { side: true } }) },
+    { id: "flip", label: "ストーンが転がった・横倒しになった", refs: [["t-remove", "remove-other"]],
+      a: () => ({ k: "remove", v: "取り除く", body: "<p>途中で転がったストーンや、横・逆さで止まったストーンは、ただちに取り除きます。</p>", rules: ["R2(d)"] }) }
+  ]},
+
+  { id: "p-end", tab: "止まったあと・エンドの終わり", desc: "ストーンが止まってから、エンドのスコアが決まるまで。", items: [
+    { id: "pos", label: "止まった位置で、残るか取り除くかを決める", refs: [["t-remove", "remove-lines"], ["t-remove", "remove-myth"]],
+      qs: [{ id: "p", label: "どこで止まった？", opts: [["shorthog", "奥のホッグラインに届いていない"], ["onhog", "奥のホッグラインにかかっている"], ["between", "ホッグラインとバックラインの間（ハウスの外も含む）"], ["onback", "バックラインに少しでもかかっている"], ["overback", "バックラインを完全に越えた"]] }],
+      a: s => ({
+        shorthog: { k: "remove", v: "取り除く", body: "<p>プレーする側のホッグラインを完全に越えていないストーンは取り除きます。ただし、他のインプレーのストーンに当たった場合は残ります。</p>", rules: ["R2(f)"], sheet: { zone: { a: 21, b: 93 } } },
+        onhog: { k: "remove", v: "取り除く", body: "<p>ホッグラインは「完全に越えないと除く」線です。ラインに少しでもかかっていれば、越えていない扱いになります。</p>", rules: ["R2(f)"], sheet: { line: 93 } },
+        between: { k: "keep", v: "残る", body: "<p>ハウスに入ったかどうかは関係ありません。ホッグラインを完全に越え、バックラインを完全には越えず、サイドラインに触れていなければ残ります。</p>", rules: ["R2(f)", "R2(g)", "R2(h)"], sheet: { zone: { a: 93, b: 120 } } },
+        onback: { k: "keep", v: "残る", body: "<p>バックラインは「完全に越えたら除く」線です。少しでもかかっていれば残ります。</p>", rules: ["R2(g)"], sheet: { line: 120 } },
+        overback: { k: "remove", v: "取り除く", body: "<p>バックラインの外側のエッジを完全に越えて止まったストーンは取り除きます。</p>", rules: ["R2(g)"], sheet: { zone: { a: 120, b: 126 } } }
+      })[s.p] },
+    { id: "point", label: "何点入ったか数える", refs: [["t-score", "score-point"]],
+      a: () => ({ k: "info", v: "相手より近い数だけ", body: "<p>エンドが終わった時点で、ハウスの中にあり、相手チームのどのストーンよりもティーに近いストーン1個につき1点です。1つのエンドで点が入るのは、一番近いストーンを持つチームだけです。</p><p>スコアは、両チームのスキップ（または代理）が同意した時点で決まります。</p>", rules: ["R12(b)", "R12(c)"], sheet: { zone: { a: 108, b: 120 } } }) },
+    { id: "measure", label: "どちらが近いか目で決められない", refs: [["t-score", "score-measure"]],
+      a: () => ({ k: "info", v: "測定する", body: "<p>測定器で、ティーからストーンの一番近い部分までを測ります。各チームから1人ずつ、測定に立ち会えます。</p><p>エンドの途中は、最後のストーンが止まるまで目で見るだけで、測定はしません。例外は、ストーンがインプレーかどうかを決めるときと、2〜5投目の前にフリーガードゾーン・ノーティックの対象かどうかを決めるときです。</p>", rules: ["R12(d)", "R2(i)"], sheet: { zone: { a: 108, b: 120 } } }) },
+    { id: "tie", label: "測っても差がわからない", refs: [["t-score", "score-tie"]],
+      qs: [{ id: "which", label: "何を決める測定？", opts: [["first", "1点目（どちらのチームが近いか）"], ["more", "2点目以降"]] }],
+      a: s => s.which === "first"
+        ? { k: "info", v: "ブランクエンド", body: "<p>目で見ても測っても決められなければ、同じ距離とみなします。どちらのチームが近いかを決める測定なら、そのエンドはブランクエンドになります。</p><p>2個以上のストーンがティーに接していて測定器が使えない場合は、まず目で決めます。</p>", rules: ["R12(f)I", "R12(e)"], sheet: { zone: { a: 108, b: 120 } } }
+        : { k: "info", v: "近いものだけ数える", body: "<p>2点目以降を決める測定で差がわからなければ、それよりティーに近いストーンだけを数えます。</p>", rules: ["R12(f)II"], sheet: { zone: { a: 108, b: 120 } } } },
+    { id: "moved", label: "スコアに同意する前にストーンが動いた", refs: [["t-score", "score-moved"]],
+      qs: [{ id: "c", label: "何で動いた？", opts: [["player", "チームの選手が動かした"], ["ext", "選手以外の外的な要因"]] }],
+      a: s => s.c === "player"
+        ? { k: "info", v: "動かしていない側に有利に", body: "<p>動かしていないチームが、測定すれば得られたかもしれない利益を受けます。</p>", rules: ["R12(c)"], sheet: { zone: { a: 108, b: 120 } } }
+        : { k: "choose", v: "やり直し、または選択", body: `<ul><li>どちらのチームが近いかに関わるなら、エンドをやり直します</li><li>動いたストーン以外に、すでに得点するストーンがあるチームは、エンドをやり直すか、決まっている点をとるかを選べます</li><li>${NEW} 最終エンドで、計測の結果が勝敗に影響しない場合は、やり直さずに審判長がスコアを決めます</li></ul>`, rules: ["R12(g)", "R12(h)"], sheet: { zone: { a: 108, b: 120 } } } }
+  ]},
+
+  { id: "p-dispute", tab: "揉めたとき", desc: "処置の判断がチームの間で割れたとき。", items: [
+    { id: "place3", label: "「止まったはずの位置」で意見が割れた", refs: [["t-dispute", "dispute-umpire"], ["t-touch", "touch-place"]],
+      a: () => ({ k: "info", v: "審判が決める", body: "<p>審判がいる試合では、規則に書かれているかどうかに関係なく、チームの間で問題になっている事項は審判が裁定します。審判はストーンの位置について指示でき、異議があれば審判長の裁定が最終決定です。</p>", rules: ["C10(b)", "C10(c)", "C10(f)"] }) },
+    { id: "noump", label: "審判がいない試合で決着がつかない", refs: [["t-dispute", "dispute-none"]],
+      a: () => ({ k: "info", v: "規則に定めなし", body: "<p>審判がいない試合でどう決着をつけるかは、規則には書かれていません。</p>", rules: ["—"] }) }
+  ]}
+];
+const PHI = Object.fromEntries(PH.map(p => [p.id, p]));
+
+/* ================= 状態 ================= */
+let mode = "sit", curP = "p-throw", curT = "t-remove";
+const pick = { "p-throw": "double", "p-moving": "who", "p-contact": "guard", "p-end": "pos", "p-dispute": "place3" };  // 開いたときに例が見えるように
+const ans = { double: { w: "before" }, who: { place: "back", stone: "thrown" }, guard: { n: "early", whose: "opp" }, pos: { p: "between" } };
+
+/* ================= シート図 ================= */
+function svgSheet(z, k) {
+  z = z || {};
+  const kc = { remove: "var(--remove)", keep: "var(--keep)", choose: "var(--choose)", info: "var(--info)" }[z.k || k] || "var(--info)";
+  const L = [];
+  L.push(`<rect x="${FT(-14)}" y="${YT}" width="${FT(126) - FT(-14)}" height="${YB - YT}" fill="var(--ice)" stroke="var(--ice-edge)"/>`);
+  const house = cx => [6, 4, 2, 0.5].map((r, i) => `<circle cx="${cx}" cy="${YC}" r="${r * PX}" fill="${["var(--ring-blue)", "var(--ice)", "var(--ring-red)", "var(--ice)"][i]}"${i % 2 ? "" : ' fill-opacity="0.85"'}/>`).join("");
+  if (z.fgz) L.push(`<rect x="${FT(93)}" y="${YT}" width="${FT(114) - FT(93)}" height="${YB - YT}" fill="${kc}" fill-opacity="0.28"/>`);
+  L.push(house(FT(0)), house(FT(114)));
+  if (z.zone) L.push(`<rect x="${FT(z.zone.a)}" y="${YT}" width="${FT(z.zone.b) - FT(z.zone.a)}" height="${YB - YT}" fill="${kc}" fill-opacity="0.26"/>`);
+  if (z.side) L.push(`<rect x="${FT(-14)}" y="${YT - 3}" width="${FT(126) - FT(-14)}" height="7" fill="${kc}"/><rect x="${FT(-14)}" y="${YB - 4}" width="${FT(126) - FT(-14)}" height="7" fill="${kc}"/>`);
+  L.push(`<line x1="${FT(-12)}" y1="${YC}" x2="${FT(126)}" y2="${YC}" stroke="var(--line)" stroke-width="1"/>`);
+  if (z.center) L.push(`<line x1="${FT(93)}" y1="${YC}" x2="${FT(114)}" y2="${YC}" stroke="${kc}" stroke-width="4"/>`);
+  const ln = (ft, w, c) => `<line x1="${FT(ft)}" y1="${YT}" x2="${FT(ft)}" y2="${YB}" stroke="${c}" stroke-width="${w}"/>`;
+  L.push(ln(-6, 1.2, "var(--line)"), ln(0, 1, "var(--line)"), ln(21, 3, "var(--hog)"), ln(93, 3, "var(--hog)"), ln(114, 1, "var(--line)"), ln(120, 1.2, "var(--line)"));
+  L.push(`<rect x="${FT(-12) - 4}" y="${YC - 9}" width="8" height="6" fill="var(--line)"/><rect x="${FT(-12) - 4}" y="${YC + 3}" width="8" height="6" fill="var(--line)"/>`);
+  if (z.line != null) L.push(`<line x1="${FT(z.line)}" y1="${YT - 6}" x2="${FT(z.line)}" y2="${YB + 6}" stroke="${kc}" stroke-width="6" stroke-opacity="0.85"/>`);
+  const lab = (ft, t, row) => `<text x="${FT(ft)}" y="${row ? 146 : 132}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="var(--f-body)">${t}</text>`;
+  L.push(lab(-12, "ハック", 0), lab(-6, "バック", 1), lab(0, "ティー", 0), lab(21, "ホッグ", 0), lab(93, "ホッグ", 0), lab(114, "ティー", 1), lab(120, "バック", 0));
+  L.push(`<text x="${FT(57)}" y="${YT - 3}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="var(--f-body)">投げる方向 →</text>`);
+  document.getElementById("sheet").innerHTML = L.join("");
+}
+
+/* ================= 描画 ================= */
+const anchorTitle = id => { const m = Object.values(TH).map(t => t.html.match(new RegExp(`<h3 id="${id}">([^<]+)</h3>`))).find(Boolean); return m ? m[1] : id; };
+
+function renderTabs() {
+  const tabs = document.getElementById("tabs");
+  if (mode === "sit") {
+    tabs.innerHTML = PH.map((p, i) => (i ? '<span class="arrow" aria-hidden="true">→</span>' : "") +
+      `<button class="tab" role="tab" id="tab-${p.id}" aria-selected="${p.id === curP}" data-id="${p.id}">${p.tab}</button>`).join("");
+  } else {
+    tabs.innerHTML = TORDER.map(id => `<button class="tab" role="tab" id="tab-${id}" aria-selected="${id === curT}" data-id="${id}">${TH[id].tab}</button>`).join("");
+  }
+  document.querySelectorAll(".mode").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === mode));
+  document.getElementById("sitview").hidden = mode !== "sit";
+  document.getElementById("themeview").hidden = mode !== "theme";
+}
+
+function renderSit() {
+  const ph = PHI[curP], itId = pick[curP], it = ph.items.find(x => x.id === itId);
+  const s = it ? (ans[it.id] || (ans[it.id] = {})) : {};
+  let h = `<h2>${ph.tab}</h2><p class="phase-desc">${ph.desc}</p><div class="q"><div class="q-label">何が起きた？</div><div class="sitlist">` +
+    ph.items.map(x => `<button class="opt" id="o-${x.id}" data-item="${x.id}" aria-pressed="${x.id === itId}">${x.label}</button>`).join("") + `</div></div>`;
+  if (it && it.qs) it.qs.forEach(q => {
+    h += `<div class="q"><div class="q-label">${q.label}</div><div class="opts">` +
+      q.opts.map(([v, t]) => `<button class="opt" id="o-${it.id}-${q.id}-${v}" data-q="${q.id}" data-v="${v}" aria-pressed="${s[q.id] === v}">${t}</button>`).join("") + `</div></div>`;
+  });
+  document.getElementById("panel").innerHTML = h;
+
+  const box = document.getElementById("answer");
+  box.className = "answer";
+  const ready = it && (!it.qs || it.qs.every(q => s[q.id]));
+  const a = ready ? it.a(s) : null;
+  if (!a) {
+    box.innerHTML = `<p class="empty">${it ? "左の質問に答えると、ここに判定が出ます。" : "左から、起きたことを選んでください。"}</p>` + refsHtml(it);
+    svgSheet(null);
+    return;
+  }
+  box.classList.add("k-" + a.k);
+  const lab = a.lab === "通念" ? T : P;
+  box.innerHTML = `<span class="verdict">${a.v}</span>${a.body}
+    <div class="meta">${a.rules[0] === "—" ? "" : lab + " 根拠 " + a.rules.map(r => `<span class="chip">${r}</span>`).join("")}</div>` + refsHtml(it);
+  svgSheet(a.sheet, a.k);
+}
+
+function refsHtml(it) {
+  if (!it) return "";
+  return `<div class="refs"><div class="q-label">関係するテーマ</div>` +
+    it.refs.map(([t, an]) => `<button class="jump" data-t="${t}" data-a="${an}">${anchorTitle(an)}<small>${TH[t].tab}</small></button>`).join("") + `</div>`;
+}
+
+function renderTheme(anchor) {
+  const t = TH[curT];
+  document.getElementById("article").innerHTML = t.html;
+  // このテーマを参照している状況を、試合の流れ順に並べる
+  const back = [];
+  PH.forEach(p => p.items.forEach(x => { if (x.refs.some(r => r[0] === curT)) back.push([p, x]); }));
+  document.getElementById("aside").innerHTML = `<div class="q-label">このテーマが関わる状況</div>` +
+    (back.length ? back.map(([p, x]) => `<button class="jump" data-p="${p.id}" data-item="${x.id}">${x.label}<small>${p.tab}</small></button>`).join("") : `<p class="empty">なし</p>`);
+  svgSheet(t.sheet);
+  if (anchor) {
+    const el = document.getElementById(anchor);
+    if (el) { el.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); el.classList.add("hl"); }
+  }
+}
+
+function go(id, anchor) {
+  if (TH[id]) { mode = "theme"; curT = id; renderTabs(); renderTheme(anchor); return; }
+  if (!PHI[id]) id = "p-throw";
+  mode = "sit"; curP = id; renderTabs(); renderSit();
+}
+function nav(id, anchor) { go(id, anchor); try { if (location.hash !== "#" + id) location.hash = id; } catch (e) {} }
+const toTop = () => window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+
+/* ================= 操作 ================= */
+document.getElementById("tabs").addEventListener("click", e => { const b = e.target.closest(".tab"); if (b) nav(b.dataset.id); });
+document.getElementById("modes").addEventListener("click", e => { const b = e.target.closest(".mode"); if (b) nav(b.dataset.mode === "theme" ? curT : curP); });
+document.getElementById("panel").addEventListener("click", e => {
+  const b = e.target.closest(".opt"); if (!b) return;
+  if (b.dataset.item) pick[curP] = b.dataset.item;
+  else { const s = ans[pick[curP]] || (ans[pick[curP]] = {}); s[b.dataset.q] = b.dataset.v; }
+  renderSit();
+  const nb = document.getElementById(b.id); if (nb) nb.focus();
+});
+document.getElementById("answer").addEventListener("click", e => {
+  const b = e.target.closest(".jump"); if (!b) return;
+  nav(b.dataset.t, b.dataset.a);
+});
+document.getElementById("aside").addEventListener("click", e => {
+  const b = e.target.closest(".jump"); if (!b) return;
+  pick[b.dataset.p] = b.dataset.item;
+  nav(b.dataset.p); toTop();
+});
+window.addEventListener("hashchange", () => { const id = location.hash.slice(1); if (id !== (mode === "sit" ? curP : curT)) go(id); });
+
+go(location.hash.slice(1) || "p-throw");
+</script>
+
+</html>
